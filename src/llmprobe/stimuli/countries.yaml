@@ -1,0 +1,84 @@
+# Countries with two independent external ground truths.
+#
+#   lat/lon   -> great-circle distance between capitals (kilometres)
+#   language  -> family / branch / sub-branch of the dominant national language,
+#                a standard proxy for cultural distance in the economics and
+#                typology literature
+#   gdp       -> GDP per capita, nominal USD, APPROXIMATE, around 2023. These are
+#                rounded order-of-magnitude figures, not an authoritative series;
+#                Cuba in particular is uncertain. Economic distance is computed as
+#                |log10 gdp_i - log10 gdp_j| and the Mantel test is rank-based, so
+#                only the rough ordering has to be right.
+#
+# Honest caveats:
+# * Linguistic distance is a PROXY for cultural distance, not a measurement of it.
+#   Hofstede-style indices would be an alternative; language family has the
+#   advantage that it is checkable rather than remembered.
+# * For several countries the "dominant language" is contestable -- Nigeria,
+#   South Africa and Ireland all have an official language that differs from the
+#   most-spoken first language. The choice made here is noted inline.
+# * Geography and language are themselves correlated (neighbours tend to be
+#   related), so the two ground truths are not independent of each other. The
+#   figure reports the correlation BETWEEN them so that is visible.
+
+ranks: [family, branch, subbranch]
+
+templates:
+  - "I travelled to {} last year."
+  - "The news report came from {}."
+  - "There is a photograph of {}."
+
+countries:
+  # name:        [lat, lon, region, family, branch, subbranch, gdp_per_capita_usd]
+  Portugal: [38.7,   -9.1, europe,   indo_european, romance,      western, 27000]
+  Spain: [40.4,   -3.7, europe,   indo_european, romance,      western, 32000]
+  France: [48.9,    2.4, europe,   indo_european, romance,      western, 44000]
+  Italy: [41.9,   12.5, europe,   indo_european, romance,      italo, 38000]
+  Romania: [44.4,   26.1, europe,   indo_european, romance,      eastern, 18000]
+  Germany: [52.5,   13.4, europe,   indo_european, germanic,     west, 52000]
+  Netherlands: [52.4,    4.9, europe,   indo_european, germanic,     west, 62000]
+  Sweden: [59.3,   18.1, europe,   indo_european, germanic,     north, 56000]
+  Norway: [59.9,   10.8, europe,   indo_european, germanic,     north, 88000]
+  Poland: [52.2,   21.0, europe,   indo_european, slavic,       west, 22000]
+  Russia: [55.8,   37.6, europe,   indo_european, slavic,       east, 13000]
+  Ukraine: [50.5,   30.5, europe,   indo_european, slavic,       east, 5000]
+  Greece: [38.0,   23.7, europe,   indo_european, hellenic,     hellenic, 23000]
+  Hungary: [47.5,   19.0, europe,   uralic,        ugric,        ugric, 22000]
+  Finland: [60.2,   24.9, europe,   uralic,        finnic,       finnic, 54000]
+  Ireland: [53.3,   -6.3, europe,   indo_european, germanic,     west, 104000]  # English as first language
+  United Kingdom: [51.5,  -0.1, europe,   indo_european, germanic,     west, 49000]
+
+  China: [39.9,  116.4, asia,     sino_tibetan,  sinitic,      sinitic, 12600]
+  Japan: [35.7,  139.7, asia,     japonic,       japonic,      japonic, 34000]
+  South Korea: [37.6,  127.0, asia,     koreanic,      koreanic,     koreanic, 33000]
+  Vietnam: [21.0,  105.8, asia,     austroasiatic, vietic,       vietic, 4300]
+  Thailand: [13.8,  100.5, asia,     kra_dai,       tai,          tai, 7200]
+  Indonesia: [-6.2,  106.8, asia,     austronesian,  malayo,       malayic, 4900]
+  Philippines: [14.6,  121.0, asia,     austronesian,  malayo,       philippine, 3900]
+  India: [28.6,   77.2, asia,     indo_european, indo_iranian, indic, 2500]
+  Pakistan: [33.7,   73.1, asia,     indo_european, indo_iranian, indic, 1600]
+  Iran: [35.7,   51.4, mideast,  indo_european, indo_iranian, iranian, 4500]
+  Turkey: [39.9,   32.9, mideast,  turkic,        oghuz,        oghuz, 13000]
+  Israel: [31.8,   35.2, mideast,  afroasiatic,   semitic,      central, 53000]
+  Saudi Arabia: [24.7,   46.7, mideast,  afroasiatic,   semitic,      central, 32000]
+
+  Egypt: [30.0,   31.2, africa,   afroasiatic,   semitic,      central, 3800]
+  Morocco: [34.0,   -6.8, africa,   afroasiatic,   semitic,      central, 3700]
+  Ethiopia: [ 9.0,   38.7, africa,   afroasiatic,   semitic,      ethiosemitic, 1300]
+  Kenya: [-1.3,   36.8, africa,   niger_congo,   bantu,        bantu, 2100]
+  Tanzania: [-6.8,   39.3, africa,   niger_congo,   bantu,        bantu, 1200]
+  South Africa: [-25.7,  28.2, africa,   niger_congo,   bantu,        bantu, 6200]  # Zulu/Xhosa as largest first languages
+  Nigeria: [ 9.1,    7.4, africa,   niger_congo,   volta_niger,  yoruboid, 1600]  # indigenous majority, not the English official language
+  Ghana: [ 5.6,   -0.2, africa,   niger_congo,   kwa,          kwa, 2200]
+
+  United States: [38.9,  -77.0, americas, indo_european, germanic,     west, 82000]
+  Canada: [45.4,  -75.7, americas, indo_european, germanic,     west, 54000]
+  Mexico: [19.4,  -99.1, americas, indo_european, romance,      western, 13800]
+  Brazil: [-15.8, -47.9, americas, indo_european, romance,      western, 10300]
+  Argentina: [-34.6, -58.4, americas, indo_european, romance,      western, 13000]
+  Colombia: [ 4.7,  -74.1, americas, indo_european, romance,      western, 6900]
+  Peru: [-12.0, -77.0, americas, indo_european, romance,      western, 7800]
+  Cuba: [23.1,  -82.4, americas, indo_european, romance,      western, 9500]
+
+  Australia: [-35.3, 149.1, oceania,  indo_european, germanic,     west, 65000]
+  New Zealand: [-41.3, 174.8, oceania,  indo_european, germanic,     west, 48000]

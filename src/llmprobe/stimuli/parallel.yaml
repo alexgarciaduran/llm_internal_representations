@@ -1,0 +1,227 @@
+# 30 meanings x 6 languages, grouped into 6 semantic topics.
+#
+# Each sentence carries three labels at once -- language, meaning, topic -- so the
+# same points can be asked three questions: is this layer sorting by surface form,
+# by exact translation equivalence, or by semantic field?
+#
+# All six languages use the Latin script on purpose. Mixing in another script
+# would make "which language is this?" answerable from the raw bytes.
+
+languages:
+- en
+- es
+- fr
+- de
+- it
+- pt
+parallel:
+- topic: food
+  en: We ate bread and cheese.
+  es: Comimos pan y queso.
+  fr: Nous avons mangé du pain et du fromage.
+  de: Wir aßen Brot und Käse.
+  it: Abbiamo mangiato pane e formaggio.
+  pt: Comemos pão e queijo.
+- topic: food
+  en: She drinks coffee every morning.
+  es: Ella bebe café todas las mañanas.
+  fr: Elle boit du café tous les matins.
+  de: Sie trinkt jeden Morgen Kaffee.
+  it: Lei beve caffè ogni mattina.
+  pt: Ela bebe café todas as manhãs.
+- topic: food
+  en: The soup is too salty.
+  es: La sopa está demasiado salada.
+  fr: La soupe est trop salée.
+  de: Die Suppe ist zu salzig.
+  it: La zuppa è troppo salata.
+  pt: A sopa está salgada demais.
+- topic: food
+  en: He bought fresh fruit at the market.
+  es: Él compró fruta fresca en el mercado.
+  fr: Il a acheté des fruits frais au marché.
+  de: Er kaufte frisches Obst auf dem Markt.
+  it: Ha comprato frutta fresca al mercato.
+  pt: Ele comprou fruta fresca no mercado.
+- topic: food
+  en: They cooked fish for dinner.
+  es: Cocinaron pescado para la cena.
+  fr: Ils ont cuisiné du poisson pour le dîner.
+  de: Sie kochten Fisch zum Abendessen.
+  it: Hanno cucinato pesce per cena.
+  pt: Cozinharam peixe para o jantar.
+- topic: travel
+  en: The train arrives at noon.
+  es: El tren llega al mediodía.
+  fr: Le train arrive à midi.
+  de: Der Zug kommt am Mittag an.
+  it: Il treno arriva a mezzogiorno.
+  pt: O trem chega ao meio-dia.
+- topic: travel
+  en: The airport is far from the city.
+  es: El aeropuerto está lejos de la ciudad.
+  fr: L'aéroport est loin de la ville.
+  de: Der Flughafen ist weit von der Stadt entfernt.
+  it: L'aeroporto è lontano dalla città.
+  pt: O aeroporto fica longe da cidade.
+- topic: travel
+  en: We walked across the old bridge.
+  es: Cruzamos el puente viejo a pie.
+  fr: Nous avons traversé le vieux pont à pied.
+  de: Wir gingen über die alte Brücke.
+  it: Abbiamo attraversato il vecchio ponte a piedi.
+  pt: Atravessamos a ponte velha a pé.
+- topic: travel
+  en: The road to the village is narrow.
+  es: El camino al pueblo es estrecho.
+  fr: La route vers le village est étroite.
+  de: Die Straße zum Dorf ist schmal.
+  it: La strada per il villaggio è stretta.
+  pt: A estrada para a aldeia é estreita.
+- topic: travel
+  en: I forgot my keys at home.
+  es: Olvidé mis llaves en casa.
+  fr: J'ai oublié mes clés à la maison.
+  de: Ich habe meine Schlüssel zu Hause vergessen.
+  it: Ho dimenticato le chiavi a casa.
+  pt: Esqueci as minhas chaves em casa.
+- topic: weather
+  en: It rained all day yesterday.
+  es: Ayer llovió todo el día.
+  fr: Il a plu toute la journée hier.
+  de: Gestern hat es den ganzen Tag geregnet.
+  it: Ieri ha piovuto tutto il giorno.
+  pt: Ontem choveu todo o dia.
+- topic: weather
+  en: The river is very cold.
+  es: El río está muy frío.
+  fr: La rivière est très froide.
+  de: Der Fluss ist sehr kalt.
+  it: Il fiume è molto freddo.
+  pt: O rio está muito frio.
+- topic: weather
+  en: Snow covered the mountains.
+  es: La nieve cubrió las montañas.
+  fr: La neige a recouvert les montagnes.
+  de: Schnee bedeckte die Berge.
+  it: La neve ha coperto le montagne.
+  pt: A neve cobriu as montanhas.
+- topic: weather
+  en: The wind broke the window.
+  es: El viento rompió la ventana.
+  fr: Le vent a cassé la fenêtre.
+  de: Der Wind zerbrach das Fenster.
+  it: Il vento ha rotto la finestra.
+  pt: O vento quebrou a janela.
+- topic: weather
+  en: The sun rises early in summer.
+  es: El sol sale temprano en verano.
+  fr: Le soleil se lève tôt en été.
+  de: Die Sonne geht im Sommer früh auf.
+  it: Il sole sorge presto in estate.
+  pt: O sol nasce cedo no verão.
+- topic: people
+  en: My brother works in a hospital.
+  es: Mi hermano trabaja en un hospital.
+  fr: Mon frère travaille dans un hôpital.
+  de: Mein Bruder arbeitet in einem Krankenhaus.
+  it: Mio fratello lavora in un ospedale.
+  pt: Meu irmão trabalha num hospital.
+- topic: people
+  en: The children play in the garden.
+  es: Los niños juegan en el jardín.
+  fr: Les enfants jouent dans le jardin.
+  de: Die Kinder spielen im Garten.
+  it: I bambini giocano in giardino.
+  pt: As crianças brincam no jardim.
+- topic: people
+  en: My grandmother tells long stories.
+  es: Mi abuela cuenta historias largas.
+  fr: Ma grand-mère raconte de longues histoires.
+  de: Meine Großmutter erzählt lange Geschichten.
+  it: Mia nonna racconta storie lunghe.
+  pt: A minha avó conta histórias longas.
+- topic: people
+  en: Her sister lives in another country.
+  es: Su hermana vive en otro país.
+  fr: Sa sœur vit dans un autre pays.
+  de: Ihre Schwester lebt in einem anderen Land.
+  it: Sua sorella vive in un altro paese.
+  pt: A irmã dela vive noutro país.
+- topic: people
+  en: The baby sleeps in the afternoon.
+  es: El bebé duerme por la tarde.
+  fr: Le bébé dort l'après-midi.
+  de: Das Baby schläft am Nachmittag.
+  it: Il bambino dorme nel pomeriggio.
+  pt: O bebé dorme à tarde.
+- topic: work
+  en: The teacher explained the lesson.
+  es: El profesor explicó la lección.
+  fr: Le professeur a expliqué la leçon.
+  de: Der Lehrer erklärte die Lektion.
+  it: Il professore ha spiegato la lezione.
+  pt: O professor explicou a lição.
+- topic: work
+  en: She reads a book every night.
+  es: Ella lee un libro cada noche.
+  fr: Elle lit un livre chaque soir.
+  de: Sie liest jeden Abend ein Buch.
+  it: Lei legge un libro ogni sera.
+  pt: Ela lê um livro todas as noites.
+- topic: work
+  en: He writes letters to his friends.
+  es: Él escribe cartas a sus amigos.
+  fr: Il écrit des lettres à ses amis.
+  de: Er schreibt Briefe an seine Freunde.
+  it: Lui scrive lettere ai suoi amici.
+  pt: Ele escreve cartas aos seus amigos.
+- topic: work
+  en: The students passed the exam.
+  es: Los estudiantes aprobaron el examen.
+  fr: Les étudiants ont réussi l'examen.
+  de: Die Studenten bestanden die Prüfung.
+  it: Gli studenti hanno superato l'esame.
+  pt: Os estudantes passaram no exame.
+- topic: work
+  en: They built a new bridge.
+  es: Construyeron un puente nuevo.
+  fr: Ils ont construit un nouveau pont.
+  de: Sie haben eine neue Brücke gebaut.
+  it: Hanno costruito un nuovo ponte.
+  pt: Construíram uma ponte nova.
+- topic: animals
+  en: The cat sleeps on the chair.
+  es: El gato duerme en la silla.
+  fr: Le chat dort sur la chaise.
+  de: Die Katze schläft auf dem Stuhl.
+  it: Il gatto dorme sulla sedia.
+  pt: O gato dorme na cadeira.
+- topic: animals
+  en: The dog ran across the street.
+  es: El perro cruzó la calle corriendo.
+  fr: Le chien a traversé la rue en courant.
+  de: Der Hund rannte über die Straße.
+  it: Il cane ha attraversato la strada correndo.
+  pt: O cachorro atravessou a rua correndo.
+- topic: animals
+  en: Birds sing outside the window.
+  es: Los pájaros cantan fuera de la ventana.
+  fr: Les oiseaux chantent dehors près de la fenêtre.
+  de: Vögel singen draußen vor dem Fenster.
+  it: Gli uccelli cantano fuori dalla finestra.
+  pt: Os pássaros cantam fora da janela.
+- topic: animals
+  en: The horse drank from the river.
+  es: El caballo bebió del río.
+  fr: Le cheval a bu dans la rivière.
+  de: Das Pferd trank aus dem Fluss.
+  it: Il cavallo ha bevuto dal fiume.
+  pt: O cavalo bebeu do rio.
+- topic: animals
+  en: A spider made a web in the corner.
+  es: Una araña hizo una tela en la esquina.
+  fr: Une araignée a fait une toile dans le coin.
+  de: Eine Spinne baute ein Netz in der Ecke.
+  it: Un ragno ha fatto una tela nell'angolo.
+  pt: Uma aranha fez uma teia no canto.

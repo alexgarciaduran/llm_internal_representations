@@ -1,0 +1,120 @@
+# Organisms with a five-level hierarchy, used as an external graded ground truth.
+#
+# distance = 5 - (number of leading ranks two organisms share)
+#   0 dog-wolf (same group)        3 dog-mushroom (same supergroup)
+#   1 dog-mouse (same class)       4 dog-oak      (same domain)
+#   2 dog-eagle (same kingdom)     5 dog-bacterium (different domain)
+#
+# The supergroup rank is the interesting one: **Opisthokonta contains animals and
+# fungi**, which really are sister groups, so a mushroom is genetically closer to
+# a dog than an oak is. Archaeplastida covers land plants and green/red algae.
+# This is a coarse proxy for genetic distance -- shared-rank depth correlates with
+# divergence time without being linear in it.
+#
+# Two honest simplifications: "protist" is a paraphyletic convenience grouping,
+# not a clade; and cetaceans are kept separate from the other ungulates, which is
+# the traditional split rather than the modern phylogeny.
+
+ranks: [domain, supergroup, kingdom, class, group]
+
+templates:
+  - "The {} was near the river."
+  - "I photographed the {} yesterday."
+  - "There is a picture of the {}."
+
+organisms:
+  # ------------------------------------------------------------ animals
+  dog:         [eukaryote, opisthokont, animal, mammal, carnivore]
+  cat:         [eukaryote, opisthokont, animal, mammal, carnivore]
+  wolf:        [eukaryote, opisthokont, animal, mammal, carnivore]
+  lion:        [eukaryote, opisthokont, animal, mammal, carnivore]
+  tiger:       [eukaryote, opisthokont, animal, mammal, carnivore]
+  bear:        [eukaryote, opisthokont, animal, mammal, carnivore]
+  monkey:      [eukaryote, opisthokont, animal, mammal, primate]
+  chimpanzee:  [eukaryote, opisthokont, animal, mammal, primate]
+  gorilla:     [eukaryote, opisthokont, animal, mammal, primate]
+  mouse:       [eukaryote, opisthokont, animal, mammal, rodent]
+  rat:         [eukaryote, opisthokont, animal, mammal, rodent]
+  squirrel:    [eukaryote, opisthokont, animal, mammal, rodent]
+  cow:         [eukaryote, opisthokont, animal, mammal, ungulate]
+  pig:         [eukaryote, opisthokont, animal, mammal, ungulate]
+  horse:       [eukaryote, opisthokont, animal, mammal, ungulate]
+  deer:        [eukaryote, opisthokont, animal, mammal, ungulate]
+  whale:       [eukaryote, opisthokont, animal, mammal, cetacean]
+  dolphin:     [eukaryote, opisthokont, animal, mammal, cetacean]
+
+  eagle:       [eukaryote, opisthokont, animal, bird, bird]
+  owl:         [eukaryote, opisthokont, animal, bird, bird]
+  sparrow:     [eukaryote, opisthokont, animal, bird, bird]
+  penguin:     [eukaryote, opisthokont, animal, bird, bird]
+  duck:        [eukaryote, opisthokont, animal, bird, bird]
+
+  snake:       [eukaryote, opisthokont, animal, reptile, reptile]
+  lizard:      [eukaryote, opisthokont, animal, reptile, reptile]
+  crocodile:   [eukaryote, opisthokont, animal, reptile, reptile]
+  turtle:      [eukaryote, opisthokont, animal, reptile, reptile]
+
+  frog:        [eukaryote, opisthokont, animal, amphibian, amphibian]
+  toad:        [eukaryote, opisthokont, animal, amphibian, amphibian]
+  salamander:  [eukaryote, opisthokont, animal, amphibian, amphibian]
+
+  salmon:      [eukaryote, opisthokont, animal, fish, fish]
+  trout:       [eukaryote, opisthokont, animal, fish, fish]
+  tuna:        [eukaryote, opisthokont, animal, fish, fish]
+  shark:       [eukaryote, opisthokont, animal, fish, fish]
+
+  ant:         [eukaryote, opisthokont, animal, insect, insect]
+  bee:         [eukaryote, opisthokont, animal, insect, insect]
+  butterfly:   [eukaryote, opisthokont, animal, insect, insect]
+  beetle:      [eukaryote, opisthokont, animal, insect, insect]
+  mosquito:    [eukaryote, opisthokont, animal, insect, insect]
+  spider:      [eukaryote, opisthokont, animal, arachnid, arachnid]
+  scorpion:    [eukaryote, opisthokont, animal, arachnid, arachnid]
+  snail:       [eukaryote, opisthokont, animal, mollusc, mollusc]
+  octopus:     [eukaryote, opisthokont, animal, mollusc, mollusc]
+
+  # -------------------------------------------------------------- fungi
+  # same supergroup as the animals, not the plants
+  mushroom:    [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
+  toadstool:   [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
+  yeast:       [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
+  mould:       [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
+  mildew:      [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
+  truffle:     [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
+
+  # ------------------------------------------------------------- plants
+  pine:        [eukaryote, archaeplastid, plant, conifer, conifer]
+  spruce:      [eukaryote, archaeplastid, plant, conifer, conifer]
+  cedar:       [eukaryote, archaeplastid, plant, conifer, conifer]
+  fir:         [eukaryote, archaeplastid, plant, conifer, conifer]
+
+  oak:         [eukaryote, archaeplastid, plant, flowering, broadleaf_tree]
+  maple:       [eukaryote, archaeplastid, plant, flowering, broadleaf_tree]
+  birch:       [eukaryote, archaeplastid, plant, flowering, broadleaf_tree]
+  willow:      [eukaryote, archaeplastid, plant, flowering, broadleaf_tree]
+
+  rose:        [eukaryote, archaeplastid, plant, flowering, flower]
+  tulip:       [eukaryote, archaeplastid, plant, flowering, flower]
+  daisy:       [eukaryote, archaeplastid, plant, flowering, flower]
+  orchid:      [eukaryote, archaeplastid, plant, flowering, flower]
+  sunflower:   [eukaryote, archaeplastid, plant, flowering, flower]
+
+  wheat:       [eukaryote, archaeplastid, plant, flowering, grass]
+  rice:        [eukaryote, archaeplastid, plant, flowering, grass]
+  corn:        [eukaryote, archaeplastid, plant, flowering, grass]
+  bamboo:      [eukaryote, archaeplastid, plant, flowering, grass]
+
+  fern:        [eukaryote, archaeplastid, plant, fern_moss, fern_moss]
+  moss:        [eukaryote, archaeplastid, plant, fern_moss, fern_moss]
+
+  seaweed:     [eukaryote, archaeplastid, plant, alga, alga]
+  algae:       [eukaryote, archaeplastid, plant, alga, alga]
+
+  # ----------------------------------------------------------- protists
+  amoeba:      [eukaryote, protist, protist, amoebozoan, amoebozoan]
+  paramecium:  [eukaryote, protist, protist, ciliate, ciliate]
+  plankton:    [eukaryote, protist, protist, plankton, plankton]
+
+  # ----------------------------------------------------------- bacteria
+  bacterium:   [bacteria, bacteria, bacteria, bacteria, bacteria]
+  microbe:     [bacteria, bacteria, bacteria, bacteria, bacteria]
