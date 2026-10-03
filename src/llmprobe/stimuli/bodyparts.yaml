@@ -1,0 +1,119 @@
+# Body parts: is there a spatial layout of the body in there?
+#
+# The ground truth is a vertical coordinate, 0 at the crown and 1 at the toes,
+# plus two categorical properties:
+#
+#   internal  organs and bones, against surfaces and features
+#   paired    two of them (eyes, lungs, hands) against one (heart, nose, spine)
+#
+# This set is ~90 parts rather than the obvious ~40, because at n = 40 nothing
+# fine-grained in this repo has survived replication.
+#
+# CAVEAT, stated plainly: unlike the periodic table or the NRC lexicon, this
+# ground truth is one I wrote. The vertical coordinates are approximate and the
+# ordering within a region (which of liver and stomach is higher) is arguable.
+# Only the coarse ordering should be taken seriously.
+#
+# Parts with no location -- skin, blood, muscle, nerve, bone -- are excluded,
+# since a vertical coordinate would be meaningless for them.
+#
+# Templates force the anatomical sense. Many of these names have commoner
+# non-body meanings in English: palm, sole, temple, nail, arch, trunk, calf.
+
+templates:
+  - "The doctor carefully examined the patient's {}."
+  - "She felt a sharp pain in her {}."
+  - "The anatomy textbook described the {} in detail."
+
+# name: [vertical 0-1, internal, paired, region]
+parts:
+  hair:        [0.02, 0, 0, head]
+  scalp:       [0.03, 0, 0, head]
+  skull:       [0.04, 1, 0, head]
+  brain:       [0.05, 1, 0, head]
+  forehead:    [0.06, 0, 0, head]
+  temple:      [0.06, 0, 1, head]
+  eyebrow:     [0.07, 0, 1, head]
+  eye:         [0.08, 0, 1, head]
+  eyelid:      [0.08, 0, 1, head]
+  eardrum:     [0.08, 1, 1, head]
+  ear:         [0.08, 0, 1, head]
+  face:        [0.08, 0, 0, head]
+  nose:        [0.09, 0, 0, head]
+  nostril:     [0.09, 0, 1, head]
+  cheek:       [0.09, 0, 1, head]
+  mouth:       [0.10, 0, 0, head]
+  lip:         [0.10, 0, 0, head]
+  tooth:       [0.10, 1, 0, head]
+  gum:         [0.10, 1, 0, head]
+  palate:      [0.10, 1, 0, head]
+  tongue:      [0.11, 1, 0, head]
+  jaw:         [0.11, 1, 0, head]
+  chin:        [0.12, 0, 0, head]
+  tonsil:      [0.12, 1, 1, head]
+  nape:        [0.14, 0, 0, neck]
+  neck:        [0.15, 0, 0, neck]
+  throat:      [0.15, 1, 0, neck]
+  larynx:      [0.16, 1, 0, neck]
+  thyroid:     [0.16, 1, 0, neck]
+  trachea:     [0.17, 1, 0, neck]
+  esophagus:   [0.18, 1, 0, neck]
+  collarbone:  [0.19, 1, 1, torso]
+  shoulder:    [0.20, 0, 1, torso]
+  armpit:      [0.23, 0, 1, arm]
+  chest:       [0.24, 0, 0, torso]
+  breast:      [0.24, 0, 1, torso]
+  sternum:     [0.24, 1, 0, torso]
+  lung:        [0.25, 1, 1, torso]
+  heart:       [0.26, 1, 0, torso]
+  rib:         [0.26, 1, 1, torso]
+  biceps:      [0.26, 1, 1, arm]
+  back:        [0.28, 0, 0, torso]
+  spine:       [0.28, 1, 0, torso]
+  vertebra:    [0.28, 1, 0, torso]
+  arm:         [0.28, 0, 1, arm]
+  diaphragm:   [0.29, 1, 0, torso]
+  elbow:       [0.30, 0, 1, arm]
+  liver:       [0.31, 1, 0, torso]
+  spleen:      [0.31, 1, 0, torso]
+  gallbladder: [0.31, 1, 0, torso]
+  stomach:     [0.32, 1, 0, torso]
+  pancreas:    [0.32, 1, 0, torso]
+  kidney:      [0.33, 1, 1, torso]
+  forearm:     [0.33, 0, 1, arm]
+  navel:       [0.34, 0, 0, torso]
+  abdomen:     [0.35, 0, 0, torso]
+  belly:       [0.35, 0, 0, torso]
+  intestine:   [0.36, 1, 0, torso]
+  waist:       [0.36, 0, 0, torso]
+  bowel:       [0.37, 1, 0, torso]
+  appendix:    [0.38, 1, 0, torso]
+  wrist:       [0.38, 0, 1, arm]
+  bladder:     [0.40, 1, 0, torso]
+  hand:        [0.41, 0, 1, hand]
+  palm:        [0.41, 0, 1, hand]
+  knuckle:     [0.41, 1, 1, hand]
+  fist:        [0.41, 0, 1, hand]
+  pelvis:      [0.42, 1, 0, torso]
+  thumb:       [0.42, 0, 1, hand]
+  finger:      [0.42, 0, 1, hand]
+  hip:         [0.43, 1, 1, torso]
+  fingernail:  [0.43, 0, 1, hand]
+  groin:       [0.44, 0, 0, torso]
+  buttock:     [0.45, 0, 1, torso]
+  thigh:       [0.55, 0, 1, leg]
+  femur:       [0.58, 1, 1, leg]
+  hamstring:   [0.58, 1, 1, leg]
+  knee:        [0.65, 0, 1, leg]
+  kneecap:     [0.65, 1, 1, leg]
+  leg:         [0.65, 0, 1, leg]
+  shin:        [0.72, 0, 1, leg]
+  calf:        [0.72, 0, 1, leg]
+  tendon:      [0.80, 1, 1, leg]
+  ankle:       [0.85, 0, 1, leg]
+  foot:        [0.95, 0, 1, foot]
+  heel:        [0.95, 0, 1, foot]
+  arch:        [0.95, 0, 1, foot]
+  sole:        [0.97, 0, 1, foot]
+  toe:         [0.98, 0, 1, foot]
+  toenail:     [0.98, 0, 1, foot]

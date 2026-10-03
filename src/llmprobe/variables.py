@@ -5,9 +5,12 @@ from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import yaml
 
 STIM = Path(__file__).parent / "stimuli"
+CACHE = Path(__file__).resolve().parents[2] / "results" / "cache"
+NRC_URL = "https://saifmohammad.com/WebDocs/VAD/NRC-VAD-Lexicon-Aug2018Release.zip"
 
 
 @lru_cache(maxsize=None)
@@ -204,8 +207,149 @@ def _elements() -> Variable:
     return Variable("elements", texts, np.array(y), np.array(groups), "word", targets)
 
 
+# ------------------------------------------------------------------- numbers
+
+def number_table():
+    """(names, value, targets).
+
+    Parity and last digit are uncorrelated with value by arithmetic, so they are
+    controls that need no statistical adjustment -- unlike every other concept
+    here, where the training-data confound has to be partialled out.
+
+    "prime_hard" is primality restricted to numbers ending in 1, 3, 7 or 9 (above
+    10), scored only on those. Unrestricted primality is mostly a last-digit
+    sieve: knowing nothing but the final digit already scores 0.857.
+    """
+    lo, hi = _load("numbers")["range"]
+    v = np.arange(lo, hi + 1)
+    prime = np.array([n > 1 and all(n % k for k in range(2, int(n ** 0.5) + 1))
+                      for n in v]).astype(int)
+    targets = {"parity": (v % 2).astype(int),
+               "last_digit": (v % 10).astype(int),
+               "div3": (v % 3 == 0).astype(int),
+               "prime": prime,
+               "prime_hard": prime}
+    masks = {"prime_hard": np.isin(v % 10, [1, 3, 7, 9]) & (v > 10)}
+    return [str(n) for n in v], v.astype(float), targets, masks
+
+
+def _numbers() -> Variable:
+    cfg = _load("numbers")
+    names, _, targets, _ = number_table()
+    last = targets["last_digit"]
+    texts, targets, y, groups = [], [], [], []
+    for i, nm in enumerate(names):
+        for t in cfg["templates"]:
+            texts.append(t.format(nm))
+            targets.append(nm)
+            y.append(last[i])
+            groups.append(i)
+    return Variable("numbers", texts, np.array(y), np.array(groups), "word", targets)
+
+
+# ------------------------------------------------------------------ emotions
+
+def _nrc_vad():
+    """The NRC VAD lexicon, downloaded once and cached. Not redistributed here.
+
+    ~20k English words rated by people for valence, arousal and dominance, each
+    in [0, 1]. Mohammad, ACL 2018.
+    """
+    f = CACHE / "NRC-VAD-Lexicon.txt"
+    if not f.exists():
+        import io
+        import urllib.request
+        import zipfile
+        CACHE.mkdir(parents=True, exist_ok=True)
+        with urllib.request.urlopen(NRC_URL, timeout=180) as r:
+            z = zipfile.ZipFile(io.BytesIO(r.read()))
+        f.write_bytes(z.read("NRC-VAD-Lexicon-Aug2018Release/NRC-VAD-Lexicon.txt"))
+    return pd.read_csv(f, sep="	", header=None,
+                       names=["word", "valence", "arousal", "dominance"])
+
+
+@lru_cache(maxsize=1)
+def emotion_table():
+    """(words, valence, arousal, dominance), sampled so V and A are independent.
+
+    Across the full lexicon valence and arousal correlate at -0.27, so recovering
+    one would partly imply the other. Drawing evenly from a grid of valence x
+    arousal cells removes that, which is what makes "arousal is encoded" a
+    separate claim from "valence is encoded".
+    """
+    from transformers import AutoTokenizer
+    from .models import REGISTRY
+
+    cfg = _load("emotions")
+    d = _nrc_vad()
+    d = d[d.word.str.fullmatch(f"[a-z]{{{cfg['min_length']},{cfg['max_length']}}}")]
+
+    tok = AutoTokenizer.from_pretrained(REGISTRY["mbert"][0])
+    whole = [len(tok.tokenize(w)) == 1 for w in d.word]       # crude frequency filter
+    d = d[np.array(whole)]
+
+    g = cfg["grid"]
+    qv = np.quantile(d.valence, np.linspace(0, 1, g + 1))
+    qa = np.quantile(d.arousal, np.linspace(0, 1, g + 1))
+    rng = np.random.default_rng(0)
+    keep = []
+    for i in range(g):
+        for j in range(g):
+            cell = d[(d.valence >= qv[i]) & (d.valence <= qv[i + 1])
+                     & (d.arousal >= qa[j]) & (d.arousal <= qa[j + 1])]
+            if len(cell):
+                take = min(cfg["per_cell"], len(cell))
+                keep.append(cell.iloc[rng.choice(len(cell), take, replace=False)])
+    d = pd.concat(keep).sort_values("word").drop_duplicates("word")
+    return (d.word.tolist(), d.valence.values, d.arousal.values, d.dominance.values)
+
+
+def _emotions() -> Variable:
+    cfg = _load("emotions")
+    words, valence, _, _ = emotion_table()
+    texts, targets, y, groups = [], [], [], []
+    for i, w in enumerate(words):
+        for t in cfg["templates"]:
+            texts.append(t.format(w))
+            targets.append(w)
+            y.append(valence[i])
+            groups.append(i)
+    return Variable("emotions", texts, np.array(y), np.array(groups), "word", targets)
+
+
+# ----------------------------------------------------------------- bodyparts
+
+def bodypart_table():
+    """(names, vertical 0-1, internal, paired, region).
+
+    Vertical position is the main claim; internal and paired are the controls
+    that a purely vertical code could not produce. Unlike the periodic table or
+    the NRC lexicon, these coordinates are ones I wrote, so only the coarse
+    ordering should be taken seriously.
+    """
+    b = _load("bodyparts")["parts"]
+    names = list(b)
+    arr = lambda i: np.array([b[n][i] for n in names], dtype=float)
+    return (names, arr(0), arr(1).astype(int), arr(2).astype(int),
+            np.array([b[n][3] for n in names]))
+
+
+def _bodyparts() -> Variable:
+    cfg = _load("bodyparts")
+    names, vertical, _, _, region = bodypart_table()
+    texts, targets, y, groups = [], [], [], []
+    for i, nm in enumerate(names):
+        for t in cfg["templates"]:
+            texts.append(t.format(nm))
+            targets.append(nm)
+            y.append(region[i])
+            groups.append(i)
+    return Variable("bodyparts", texts, np.array(y), np.array(groups), "word", targets)
+
+
 BUILDERS = {"taxonomy": _taxonomy, "countries": _countries,
-            "elements": _elements}
+            "elements": _elements, "numbers": _numbers,
+            "emotions": _emotions, "bodyparts": _bodyparts}
 
 
 def build(name):

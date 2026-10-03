@@ -1,0 +1,35 @@
+# Emotion words, against an EXTERNAL ground truth.
+#
+# Every other concept here is scored against a table I wrote: taxonomic ranks,
+# country coordinates, the periodic table. This one is scored against the NRC VAD
+# lexicon (Mohammad, ACL 2018), ~20,000 English words rated by people for
+#
+#   valence     unpleasant -> pleasant
+#   arousal     calm -> excited
+#   dominance   controlled -> in control
+#
+# The lexicon is downloaded on first run and cached; it is not redistributed here.
+#
+# WHY THE SAMPLING MATTERS. Across the whole lexicon valence and arousal are
+# correlated (rho = -0.27), so a probe that recovered only valence would look like
+# it had partly recovered arousal too. The stimulus set is therefore drawn from a
+# grid of valence x arousal cells, which makes the two independent WITHIN the set
+# -- the same trick the periodic table gives for free, where group is uncorrelated
+# with atomic number.
+#
+# Words are restricted to those mBERT encodes as a single wordpiece. That is a
+# crude frequency filter, but a necessary one: the lexicon is full of rare and
+# interjectional entries whose representations would be mostly noise.
+#
+# Frames are deliberately neutral and part-of-speech agnostic, because the lexicon
+# mixes adjectives, nouns and verbs and no single syntactic frame fits all three.
+
+templates:
+  - "The word {} appeared in the message."
+  - "She paused at the word {}."
+  - "He underlined the word {} twice."
+
+grid: 6          # 6 x 6 valence x arousal cells
+per_cell: 8      # -> about 288 words
+min_length: 3
+max_length: 12

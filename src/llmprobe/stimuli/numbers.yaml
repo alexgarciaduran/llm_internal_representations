@@ -1,0 +1,35 @@
+# The numbers 1-400, chosen for their control structure rather than their content.
+#
+# Every other concept here needs a statistical argument that the result is not
+# just familiarity or list order. Numbers need no such argument, because the
+# controls are arithmetic:
+#
+#   magnitude    the obvious axis, and the one a frequency effect would mimic
+#   last digit   exactly uncorrelated with magnitude (rho = 0 over any decade run)
+#   parity       likewise, and binary
+#   primality    nearly so, drifting only because primes thin out
+#
+# So a model can be asked whether it represents "how big" and "ends in 7"
+# SEPARATELY. No amount of knowing the number line produces the second.
+#
+# Last digit is also CYCLIC: 9 is adjacent to 0. If the model encodes it at all,
+# the interesting question is whether it does so as a ring.
+#
+# PRIMALITY NEEDS ITS OWN CONTROL. Every prime above 5 ends in 1, 3, 7 or 9, so a
+# probe that knows nothing but the last digit scores 0.857 balanced accuracy on
+# primality. The real test restricts to numbers ending in 1, 3, 7, 9 (above 10),
+# where the last digit says nothing: 156 numbers, 74 of them prime.
+#
+# The range is 400 rather than 100 so that the restricted set is large enough to
+# test at all, and so the sparse targets have enough positive cases.
+#
+# Templates force the quantity reading. A bare numeral is a token in a vacuum,
+# and would mostly measure where that string tends to appear (years, prices,
+# list indices) rather than its value.
+
+templates:
+  - "The number {} appeared on the page."
+  - "She counted all the way to {}."
+  - "They wrote {} on the board."
+
+range: [1, 400]

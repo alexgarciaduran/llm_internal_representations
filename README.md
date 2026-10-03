@@ -16,10 +16,13 @@ pip install -e .
 python tools/summary_figure.py
 python tools/countries_figure.py
 python tools/elements_figure.py
+python tools/numbers_figure.py
+python tools/emotions_figure.py
 ```
 
-First run downloads four models (~2 GB, cached in `~/.cache/huggingface`) and
-writes per-layer statistics to `results/`. Later runs reuse that cache.
+First run downloads four models (~2 GB, cached in `~/.cache/huggingface`) and,
+for the emotions figure, the NRC VAD lexicon (into `results/cache/`). Per-layer
+statistics are written to `results/`; later runs reuse all of it.
 
 ## The idea
 
@@ -43,32 +46,28 @@ which model, and which layer. Fungal names are also much rarer in text than
 animal or plant names (mean log-probability −16.2 against −11.4 and −12.5), so
 their representations are noisier.
 
-**The periodic table.** 56 elements. Each one's position is predicted from
-internal activations by a ridge model that never saw it, so the layout cannot come
-from overfitting.
+**Emotion words.** 287 words scored against the NRC VAD lexicon (Mohammad, ACL
+2018) — the only ground truth here that I did not write myself. The lexicon is
+downloaded on first run and cached, not redistributed.
 
-![elements](figures/ELEMENTS.png)
+![emotions](figures/EMOTIONS.png)
 
-This is the only **two-dimensional** ground truth here — every other concept is a
-scale, a circle or a tree — and the two axes are independent of each other
-(ρ = 0.03), so learning the elements in order would not produce a grid. Qwen
-recovers both axes well (period r = +0.75, group r = +0.77); mBERT and GPT-2 get
-about +0.46 to +0.49. Group is the real test, since it is uncorrelated with atomic
-number, and only Qwen picks it up in the distance geometry as well.
+The affective circumplex is two-dimensional like the periodic table, and gets the
+same treatment: across the full lexicon valence and arousal correlate at −0.27,
+so the stimulus set is drawn evenly from a grid of valence × arousal cells, which
+brings that to **+0.02 within the set**. Only then is "arousal is encoded" a
+separate claim from "valence is encoded".
 
-A predicted-coordinate plot is built to look like a table — its axes *are* the
-predicted period and group — so the last two panels drop the supervision entirely:
-a UMAP of the same activations, which is never told what to look for. Both
-quantities still organise it (|r| with the better UMAP axis = 0.39 for atomic
-number and 0.48 for group, against 0.14 under a label shuffle). The structure is
-there before anyone asks for it; the regression recovers it more sharply
-(0.75–0.77) because it may use all the dimensions rather than two.
+Both are recovered from held-out words — valence r = +0.58 to +0.68, arousal
+r = +0.49 to +0.63, against shuffled-label nulls of 0.03–0.14. Dominance scores
+highest of the three (+0.65 to +0.74) but is **not** an independent axis: it still
+correlates +0.55 with valence after the grid sampling, so that number is largely a
+valence score under another name.
 
-Colour is **atomic number** across three of the four panels, since atomic number
-tracks period almost perfectly (ρ = +0.97) and so makes period redundant. Group
-keeps its own panel because atomic number says nothing about it at all
-(ρ = +0.00) — that independence is the whole reason the periodic table is a
-useful test here, rather than another 1-D scale.
+The dissociation between probe and geometry is starker here than anywhere else in
+the repo: valence is decodable at +0.68, yet organises the unsupervised UMAP at
+only |r| = 0.18. The information is linearly available without being what the
+representation is mostly *about*.
 
 **Meaning across languages.** 30 meanings × 6 languages. Early layers sort
 sentences by **which language** they are in; by the middle layers that has
@@ -91,6 +90,16 @@ The depth traces show what a single layer would hide: **the economic signal is
 strongest in the lower-middle layers and fades toward the output, while geography
 grows with depth.**
 
+**Further explorations.** Several more concepts are in the repo without a
+write-up here — run their scripts to see what they give:
+
+- **the periodic table** (`tools/elements_figure.py`), 56 elements on a genuinely
+  two-dimensional ground truth
+- **numbers** (`tools/numbers_figure.py`), 1–400, where the controls are
+  arithmetic rather than statistical
+- **body parts** (`tools/bodyparts_figure.py`), 90 parts on a head-to-toe
+  coordinate with an internal/external control independent of height
+
 ## What held up, and what didn't
 
 The coarse signals are robust. Fine-grained claims about particular sub-groups
@@ -107,6 +116,15 @@ By layer 4 the sign flips and GPT-2 agrees with the other models.
 phylogeny allows. Expanding the fungal set from 6 to 18 made the effect reverse in
 mBERT (+0.43 → −0.22), vanish in Qwen (+0.31 → +0.04), and survive only in GPT-2.
 It was a property of which six fungi were picked.
+
+**A cue inside the label flipped a result.** Primality looked decodable at 0.84
+until the last-digit sieve was measured on its own and scored 0.857 — the probe
+had learned "ends in 1, 3, 7 or 9", not primality.
+
+**A tokenizer flipped a result.** Qwen2.5-0.5B splits numerals into single digits
+(`47` → `4`, `7`), so its "last digit" is an input token sitting inside the span.
+It is excluded from that comparison rather than reported as a model that encodes
+digits unusually well.
 
 **A model choice flipped a result.** The same fungal comparison looked
 non-monotonic under BERT at one layer and perfectly monotonic under mBERT at
@@ -134,11 +152,14 @@ src/llmprobe/
   familiarity.py  how well the model knows a name (the training-data control)
   curves.py       cached per-layer curves, and the one definition of the layer rule
   variables.py    the concepts and their ground truths
-  stimuli/        taxonomy.yaml · countries.yaml · parallel.yaml · elements.yaml
+  stimuli/        taxonomy.yaml · countries.yaml · parallel.yaml · elements.yaml · numbers.yaml · emotions.yaml · bodyparts.yaml
 tools/
   summary_figure.py     -> figures/SUMMARY.png
   countries_figure.py   -> figures/COUNTRIES.png
   elements_figure.py    -> figures/ELEMENTS.png
+  numbers_figure.py     -> figures/NUMBERS.png
+  emotions_figure.py    -> figures/EMOTIONS.png
+  bodyparts_figure.py   -> figures/BODYPARTS.png
 ```
 
 Stimuli are plain YAML — adding an organism, a country or a sentence is an edit,
