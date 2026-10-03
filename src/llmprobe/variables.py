@@ -24,6 +24,11 @@ class Variable:
     level: str                # "word" | "sentence"
     targets: list = None
 
+    def __repr__(self):
+        return (f"<Variable {self.name}: {len(self.texts)} samples, "
+                f"{len(np.unique(self.groups))} items, "
+                f"{len(set(self.y.tolist()))} classes>")
+
 
 # ------------------------------------------------------------------ taxonomy
 
@@ -152,7 +157,55 @@ def parallel_corpus():
 
 
 
-BUILDERS = {"taxonomy": _taxonomy, "countries": _countries}
+
+# ------------------------------------------------------------------ elements
+
+def element_table():
+    """(names, atomic number, period, group, block, category)."""
+    e = _load("elements")["elements"]
+    names = list(e)
+    arr = lambda i: np.array([e[n][i] for n in names], dtype=float)
+    return (names, arr(0), arr(1), arr(2),
+            np.array([e[n][3] for n in names]), np.array([e[n][4] for n in names]))
+
+
+def element_distances():
+    """Four ground truths, three of them genuinely different geometries.
+
+      z       |difference in atomic number|  -- the 1-D reading order
+      lattice euclidean distance on the (period, group) grid -- the TABLE itself
+      group   |difference in group|  -- the column, which predicts chemistry
+      period  |difference in period| -- the row, which predicts size
+
+    Group and period are the two axes of the lattice, so they are not independent
+    of it; they are included to see which axis a model tracks. Atomic number runs
+    almost orthogonally to group, which is what makes the table a real test: a
+    model could learn the list without learning the grid.
+    """
+    _, z, period, group, _, _ = element_table()
+    d = lambda v: np.abs(v[:, None] - v[None, :])
+    # period spans 6 values and group 18, so an unscaled euclidean distance
+    # would be ~the group axis alone; each axis is put on a common range
+    lattice = np.sqrt((d(period) / np.ptp(period)) ** 2
+                      + (d(group) / np.ptp(group)) ** 2)
+    return {"z": d(z), "lattice": lattice, "group": d(group), "period": d(period)}
+
+
+def _elements() -> Variable:
+    cfg = _load("elements")
+    names, _, _, _, _, category = element_table()
+    texts, targets, y, groups = [], [], [], []
+    for i, nm in enumerate(names):
+        for t in cfg["templates"]:
+            texts.append(t.format(nm))
+            targets.append(nm)
+            y.append(category[i])
+            groups.append(i)
+    return Variable("elements", texts, np.array(y), np.array(groups), "word", targets)
+
+
+BUILDERS = {"taxonomy": _taxonomy, "countries": _countries,
+            "elements": _elements}
 
 
 def build(name):

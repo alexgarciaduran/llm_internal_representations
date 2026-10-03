@@ -72,11 +72,17 @@ def taxonomy_curve(model, tax, D_tax):
     return _cached(f"taxonomy_{model}", build)
 
 
-def cached_familiarity(model, names):
-    """How well the model knows each name. Cached; see familiarity.py."""
-    f = RESULTS / f"familiarity_{model}.csv"
+def cached_familiarity(model, names, concept):
+    """How well the model knows each name. Cached; see familiarity.py.
+
+    The cache key includes `concept`: keying on the model alone handed the 48
+    countries back for a 56-element query.
+    """
+    f = RESULTS / f"familiarity_{concept}_{model}.csv"
     if f.exists():
-        return pd.read_csv(f).value.values
+        d = pd.read_csv(f)
+        if list(d.name) == list(names):
+            return d.value.values
     v = familiarity(load(model), names)
-    pd.DataFrame({"country": names, "value": v}).to_csv(f, index=False)
+    pd.DataFrame({"name": names, "value": v}).to_csv(f, index=False)
     return v

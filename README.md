@@ -15,6 +15,7 @@ every statistic is tested against a permutation null.
 pip install -e .
 python tools/summary_figure.py
 python tools/countries_figure.py
+python tools/elements_figure.py
 ```
 
 First run downloads four models (~2 GB, cached in `~/.cache/huggingface`) and
@@ -41,6 +42,33 @@ answerable here: the effect changes sign depending on which fungi are included,
 which model, and which layer. Fungal names are also much rarer in text than
 animal or plant names (mean log-probability −16.2 against −11.4 and −12.5), so
 their representations are noisier.
+
+**The periodic table.** 56 elements. Each one's position is predicted from
+internal activations by a ridge model that never saw it, so the layout cannot come
+from overfitting.
+
+![elements](figures/ELEMENTS.png)
+
+This is the only **two-dimensional** ground truth here — every other concept is a
+scale, a circle or a tree — and the two axes are independent of each other
+(ρ = 0.03), so learning the elements in order would not produce a grid. Qwen
+recovers both axes well (period r = +0.75, group r = +0.77); mBERT and GPT-2 get
+about +0.46 to +0.49. Group is the real test, since it is uncorrelated with atomic
+number, and only Qwen picks it up in the distance geometry as well.
+
+A predicted-coordinate plot is built to look like a table — its axes *are* the
+predicted period and group — so the last two panels drop the supervision entirely:
+a UMAP of the same activations, which is never told what to look for. Both
+quantities still organise it (|r| with the better UMAP axis = 0.39 for atomic
+number and 0.48 for group, against 0.14 under a label shuffle). The structure is
+there before anyone asks for it; the regression recovers it more sharply
+(0.75–0.77) because it may use all the dimensions rather than two.
+
+Colour is **atomic number** across three of the four panels, since atomic number
+tracks period almost perfectly (ρ = +0.97) and so makes period redundant. Group
+keeps its own panel because atomic number says nothing about it at all
+(ρ = +0.00) — that independence is the whole reason the periodic table is a
+useful test here, rather than another 1-D scale.
 
 **Meaning across languages.** 30 meanings × 6 languages. Early layers sort
 sentences by **which language** they are in; by the middle layers that has
@@ -106,10 +134,11 @@ src/llmprobe/
   familiarity.py  how well the model knows a name (the training-data control)
   curves.py       cached per-layer curves, and the one definition of the layer rule
   variables.py    the concepts and their ground truths
-  stimuli/        taxonomy.yaml · countries.yaml · parallel.yaml
+  stimuli/        taxonomy.yaml · countries.yaml · parallel.yaml · elements.yaml
 tools/
   summary_figure.py     -> figures/SUMMARY.png
   countries_figure.py   -> figures/COUNTRIES.png
+  elements_figure.py    -> figures/ELEMENTS.png
 ```
 
 Stimuli are plain YAML — adding an organism, a country or a sentence is an edit,

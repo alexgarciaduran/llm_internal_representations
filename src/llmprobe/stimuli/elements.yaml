@@ -1,0 +1,80 @@
+# Chemical elements, with the only genuinely TWO-DIMENSIONAL ground truth here.
+#
+# Every other concept in this repo has a 1-D scale (temperature, GDP), a circle
+# (hue) or a tree (taxonomy, language). The periodic table is a lattice: each
+# element has a period (row) and a group (column), and both carry real meaning --
+# group predicts chemical behaviour, period predicts size and shell structure.
+#
+# So the question is sharper than before: does a model that has only read about
+# chemistry recover the TABLE, or just the ordering by atomic number?
+#
+# Lanthanides and actinides are left out: they have no standard group, so the
+# lattice would be undefined for them.
+#
+# Templates force the chemical reading. Several element names are polysemous in
+# English -- lead, tin, mercury, gold, silver, carbon -- and a bare name would
+# measure the wrong sense.
+
+templates:
+  - "A sample of pure {} was analysed in the laboratory."
+  - "The element {} appears in the periodic table."
+  - "They measured the density of {}."
+
+# name: [atomic_number, period, group, block, category]
+elements:
+  hydrogen:   [1,  1, 1,  s, nonmetal]
+  helium:     [2,  1, 18, s, noble_gas]
+  lithium:    [3,  2, 1,  s, alkali_metal]
+  beryllium:  [4,  2, 2,  s, alkaline_earth]
+  boron:      [5,  2, 13, p, metalloid]
+  carbon:     [6,  2, 14, p, nonmetal]
+  nitrogen:   [7,  2, 15, p, nonmetal]
+  oxygen:     [8,  2, 16, p, nonmetal]
+  fluorine:   [9,  2, 17, p, halogen]
+  neon:       [10, 2, 18, p, noble_gas]
+  sodium:     [11, 3, 1,  s, alkali_metal]
+  magnesium:  [12, 3, 2,  s, alkaline_earth]
+  aluminium:  [13, 3, 13, p, post_transition]
+  silicon:    [14, 3, 14, p, metalloid]
+  phosphorus: [15, 3, 15, p, nonmetal]
+  sulfur:     [16, 3, 16, p, nonmetal]
+  chlorine:   [17, 3, 17, p, halogen]
+  argon:      [18, 3, 18, p, noble_gas]
+  potassium:  [19, 4, 1,  s, alkali_metal]
+  calcium:    [20, 4, 2,  s, alkaline_earth]
+  scandium:   [21, 4, 3,  d, transition_metal]
+  titanium:   [22, 4, 4,  d, transition_metal]
+  vanadium:   [23, 4, 5,  d, transition_metal]
+  chromium:   [24, 4, 6,  d, transition_metal]
+  manganese:  [25, 4, 7,  d, transition_metal]
+  iron:       [26, 4, 8,  d, transition_metal]
+  cobalt:     [27, 4, 9,  d, transition_metal]
+  nickel:     [28, 4, 10, d, transition_metal]
+  copper:     [29, 4, 11, d, transition_metal]
+  zinc:       [30, 4, 12, d, transition_metal]
+  gallium:    [31, 4, 13, p, post_transition]
+  germanium:  [32, 4, 14, p, metalloid]
+  arsenic:    [33, 4, 15, p, metalloid]
+  selenium:   [34, 4, 16, p, nonmetal]
+  bromine:    [35, 4, 17, p, halogen]
+  krypton:    [36, 4, 18, p, noble_gas]
+  rubidium:   [37, 5, 1,  s, alkali_metal]
+  strontium:  [38, 5, 2,  s, alkaline_earth]
+  zirconium:  [40, 5, 4,  d, transition_metal]
+  niobium:    [41, 5, 5,  d, transition_metal]
+  molybdenum: [42, 5, 6,  d, transition_metal]
+  silver:     [47, 5, 11, d, transition_metal]
+  cadmium:    [48, 5, 12, d, transition_metal]
+  tin:        [50, 5, 14, p, post_transition]
+  antimony:   [51, 5, 15, p, metalloid]
+  iodine:     [53, 5, 17, p, halogen]
+  xenon:      [54, 5, 18, p, noble_gas]
+  caesium:    [55, 6, 1,  s, alkali_metal]
+  barium:     [56, 6, 2,  s, alkaline_earth]
+  tungsten:   [74, 6, 6,  d, transition_metal]
+  platinum:   [78, 6, 10, d, transition_metal]
+  gold:       [79, 6, 11, d, transition_metal]
+  mercury:    [80, 6, 12, d, transition_metal]
+  thallium:   [81, 6, 13, p, post_transition]
+  lead:       [82, 6, 14, p, post_transition]
+  bismuth:    [83, 6, 15, p, post_transition]

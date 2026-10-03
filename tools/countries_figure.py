@@ -107,7 +107,7 @@ def predictors(model, names):
     geo, ling, econ = V.country_distances()
     lex = np.array([[1 - SequenceMatcher(None, a.lower(), b.lower()).ratio()
                      for b in names] for a in names])
-    f = cached_familiarity(model, names)
+    f = cached_familiarity(model, names, "countries")
     return {"econ": econ, "ling": ling, "geo": geo,
             "fampair": (f[:, None] + f[None, :]) / 2,
             "famdiff": np.abs(f[:, None] - f[None, :]),
@@ -154,7 +154,7 @@ def main():
         T[m] = predictors(m, names)
         reps = extract_reps(load(m), var)
         L = sel[m] = semantic_layer(m)
-        lex_s = lexical_score(reps, var.groups, cached_familiarity(m, names))
+        lex_s = lexical_score(reps, var.groups, cached_familiarity(m, names, "countries"))
         D[m] = squareform(pdist(G.center(G.item_states(reps[L], var.groups)), "euclidean"))
         marg[m] = [G.mantel(D[m], T[m][k], n_perm=1000)[0] for k in KEYS]
         beta[m], pval[m], err[m], r2[m] = weights(D[m], T[m], iu)
