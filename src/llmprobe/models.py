@@ -58,3 +58,18 @@ def load(name):
     for p in model.parameters():
         p.requires_grad_(False)
     return LoadedModel(name, hf_id, kind, model, tok)
+
+
+@lru_cache(maxsize=4)
+def load_mlm(name):
+    """Masked-LM head version, needed to score a string under a masked model."""
+    from transformers import AutoModelForMaskedLM, AutoTokenizer
+
+    hf_id, kind = REGISTRY[name]
+    if kind != "masked":
+        raise ValueError(f"{name} is {kind}, not a masked LM")
+    tok = AutoTokenizer.from_pretrained(hf_id)
+    model = AutoModelForMaskedLM.from_pretrained(hf_id, dtype=torch.float32).eval()
+    for p in model.parameters():
+        p.requires_grad_(False)
+    return model, tok

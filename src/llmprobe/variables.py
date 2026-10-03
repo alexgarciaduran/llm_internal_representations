@@ -73,7 +73,7 @@ def country_table():
     names = list(c)
     arr = lambda i, t=float: np.array([c[n][i] for n in names], dtype=t)
     return (names, arr(0), arr(1), np.array([c[n][2] for n in names]),
-            np.array([c[n][3:6] for n in names]), arr(6))
+            np.array([c[n][3:6] for n in names]), arr(6), arr(7))
 
 
 def country_distances():
@@ -87,7 +87,7 @@ def country_distances():
     These three correlate with each other at |rho| < 0.2, so each can be credited
     separately.
     """
-    _, lat, lon, _, langs, gdp = country_table()
+    _, lat, lon, _, langs, gdp, _ = country_table()
     la, lo = np.radians(lat), np.radians(lon)
     a = (np.sin((la[:, None] - la[None, :]) / 2) ** 2
          + np.cos(la)[:, None] * np.cos(la)[None, :]
@@ -107,9 +107,17 @@ def country_distances():
     return geo, depth - shared, np.abs(lg[:, None] - lg[None, :])
 
 
+def population_distance():
+    """|Δ log10 population|. Population drives most composite power indices and is
+    known far more reliably than any of them."""
+    *_, pop = country_table()
+    lp = np.log10(pop)
+    return np.abs(lp[:, None] - lp[None, :])
+
+
 def _countries():
     cfg = _load("countries")
-    names, _, _, region, _, _ = country_table()
+    names, _, _, region, _, _, _ = country_table()
     texts, targets, y, groups = [], [], [], []
     for i, nm in enumerate(names):
         for t in cfg["templates"]:
