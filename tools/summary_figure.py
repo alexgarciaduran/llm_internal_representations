@@ -12,6 +12,7 @@ from scipy.spatial.distance import pdist, squareform
 
 from llmprobe import quiet  # noqa: F401
 from llmprobe import geometry as G, variables as V
+from llmprobe.curves import meaning_curve, semantic_layer, taxonomy_curve
 from llmprobe.embed import extract_reps, sentence_states
 from llmprobe.geometry import mantel
 from llmprobe.models import load, set_seed
@@ -23,9 +24,9 @@ RES.mkdir(exist_ok=True)
 BLUE, ORANGE, AQUA = "#2a78d6", "#eb6834", "#1baf7a"   # validated palette slots 1-3
 GREY = "#9a9992"
 INK, INK2, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#8a8984", "#e6e5e1", "#fcfcfb"
-MODELS = ["bert", "gpt2", "qwen0.5b"]
-COLOUR = {"bert": BLUE, "gpt2": ORANGE, "qwen0.5b": AQUA, "mbert": BLUE}
-SHORT = {"bert": "BERT", "gpt2": "GPT-2", "qwen0.5b": "Qwen2.5-0.5B", "mbert": "mBERT"}
+MODELS = ["mbert", "gpt2", "qwen0.5b"]
+COLOUR = {"mbert": BLUE, "bert": BLUE, "gpt2": ORANGE, "qwen0.5b": AQUA, "mbert": BLUE}
+SHORT = {"mbert": "mBERT", "bert": "BERT", "gpt2": "GPT-2", "qwen0.5b": "Qwen2.5-0.5B", "mbert": "mBERT"}
 
 
 def axes_style(ax, scatter=False, grid="y"):
@@ -59,60 +60,10 @@ def legend(ax, **kw):
         t.set_color(INK2)
 
 
-def cached(name, build):
-    f = RES / f"{name}.csv"
-    if f.exists():
-        return pd.read_csv(f)
-    df = build()
-    df.to_csv(f, index=False)
-    return df
-
-
-def tax_curve(model, tax, D_tax):
-    def build():
-        reps = extract_reps(load(model), tax)
-        return pd.DataFrame([{"L": L, "tax_rho": mantel(squareform(pdist(
-            G.center(G.item_states(reps[L], tax.groups)), "euclidean")),
-            D_tax, n_perm=500)[0]} for L in range(len(reps))])
-    return cached(f"taxonomy_{model}", build)
-
-
-def meaning_curve(model, pc, pool):
-    def build():
-        reps = sentence_states(load(model), pc["texts"], pool=pool)
-        return pd.DataFrame([
-            {"layer": L, **{lab: G.cluster_separation(G.center(reps[L]), pc[lab],
-                                                      n_perm=300)[0]
-                            for lab in ("language", "meaning", "topic")}}
-            for L in range(len(reps))])
-    return cached(f"meaning_{model}_{pool}", build)
-
-
-def country_curve(model, var, truths):
-    def build():
-        reps = extract_reps(load(model), var)
-        rows = []
-        for L in range(len(reps)):
-            D = squareform(pdist(G.center(G.item_states(reps[L], var.groups)),
-                                 "euclidean"))
-            row = {"L": L}
-            for nm, T in truths.items():
-                row[nm], row[nm + "_p"] = mantel(D, T, n_perm=1000)
-            rows.append(row)
-        return pd.DataFrame(rows)
-    return cached(f"countries_{model}", build)
 
 
 
-def country_layer(curve):
-    """One layer per model, chosen neutrally: the layer with the highest mean
-    agreement across geography, language and economy.
 
-    Letting each ground truth pick its own best layer inflates it -- that is a
-    maximum over ~13-25 chances. Reading all of them at one layer keeps them
-    comparable.
-    """
-    return int(curve[["geo", "ling", "econ"]].mean(axis=1).idxmax())
 
 
 def main():
@@ -124,16 +75,16 @@ def main():
     D_tax = V.taxonomy_distance()
     org_names, ranks, _ = V.taxonomy_table()
     kingdom = ranks[:, 2]
-    treps = extract_reps(load("bert"), tax)
-    tc = tax_curve("bert", tax, D_tax)
+    treps = extract_reps(load("mbert"), tax)
+    tc = taxonomy_curve("mbert", tax, D_tax)
     xbest = int(tc.loc[tc.tax_rho.idxmax(), "L"])
     Xtax = G.project_2d(G.center(G.item_states(treps[xbest], tax.groups)),
                         method="umap", seed=0)
-    print(f"  living things  BERT L{xbest}", flush=True)
+    print(f"  living things  mBERT L{xbest}", flush=True)
 
     # ---- meaning
     pc = V.parallel_corpus()
-    mt = meaning_curve("mbert", pc, "mean")
+    mt = meaning_curve("mbert")
     mbest = int(mt.meaning.idxmax())
     mreps = sentence_states(load("mbert"), pc["texts"], pool="mean")
     Xm = G.project_2d(G.center(mreps[mbest]), method="umap", seed=0)
@@ -141,17 +92,27 @@ def main():
 
     # ---- countries, with three independent ground truths
     cvar = V.build("countries")
-    cnames, _, _, region, _, _ = V.country_table()
+    cnames, _, _, region, _, _, _ = V.country_table()
     geo, ling, econ = V.country_distances()
     lex = np.array([[1 - SequenceMatcher(None, a.lower(), b.lower()).ratio()
                      for b in cnames] for a in cnames])
     truths = {"geo": geo, "ling": ling, "econ": econ, "lex": lex}
-    curves = {m: country_curve(m, cvar, truths) for m in MODELS}
-    creps = extract_reps(load("bert"), cvar)
-    cbest = int(curves["bert"].loc[country_layer(curves["bert"]), "L"])
+    # every model read at its own semantic layer, the same rule countries_figure
+    # uses -- chosen from the parallel corpus, so never tuned to the country data
+    sel = {m: semantic_layer(m) for m in MODELS}
+    cmantel, creps = {}, None
+    for m in MODELS:
+        reps_m = extract_reps(load(m), cvar)
+        if m == "mbert":
+            creps = reps_m
+        Dm = squareform(pdist(G.center(G.item_states(reps_m[sel[m]], cvar.groups)),
+                              "euclidean"))
+        cmantel[m] = {k: G.mantel(Dm, T, n_perm=1000)[0] for k, T in truths.items()}
+    cbest = sel["mbert"]
     Xc = G.project_2d(G.center(G.item_states(creps[cbest], cvar.groups)),
                       method="umap", seed=0)
-    print(f"  countries      BERT L{cbest}", flush=True)
+    print(f"  countries      mBERT L{cbest} (layers: " +
+          ", ".join(f"{m} L{sel[m]}" for m in MODELS) + ")", flush=True)
 
     fig = plt.figure(figsize=(18.5, 10.6), facecolor=SURFACE)
     gs = fig.add_gridspec(2, 6, hspace=0.5, wspace=0.85,
@@ -229,7 +190,7 @@ def main():
     d = D_tax[iu]
     nb = int(d.max()) + 1
     for m in MODELS:
-        tt = tax_curve(m, tax, D_tax)
+        tt = taxonomy_curve(m, tax, D_tax)
         L = int(tt.loc[tt.tax_rho.idxmax(), "L"])
         r2 = extract_reps(load(m), tax)
         rep = squareform(pdist(G.center(G.item_states(r2[L], tax.groups))))[iu]
@@ -244,17 +205,14 @@ def main():
                        fontsize=7)
     ax.set_xlabel("relatedness   (dog–wolf → dog–bacterium)")
     ax.set_ylabel("distance in the model (z across all pairs)")
-    ax.annotate("fungi break it: mushrooms sit\nnearer plants than their kin",
-                xy=(3, 0.70), xytext=(2.25, -1.25), fontsize=7.2, color=MUTED,
-                arrowprops=dict(arrowstyle="->", color=MUTED, lw=0.8))
     legend(ax, fontsize=7.6, loc="upper left")
     axes_style(ax)
     title(ax, "Distance tracks relatedness")
 
     # --- shared space for meaning
     ax = fig.add_subplot(gs[1, 2:4], facecolor=SURFACE)
-    for m, pool in [("mbert", "mean"), ("qwen0.5b", "last")]:
-        t = meaning_curve(m, pc, pool)
+    for m in ["mbert", "qwen0.5b"]:          # the two multilingual models
+        t = meaning_curve(m)
         x = np.linspace(0, 1, len(t))
         ax.plot(x, t.meaning, "-", color=COLOUR[m], lw=2.6,
                 label=f"{SHORT[m]} — meaning", zorder=3)
@@ -273,11 +231,10 @@ def main():
               ("ling", "Shared branches of the language family tree"),
               ("econ", "Gap in GDP per capita  (log scale)"),
               ("lex", "Spelling of the country names  (control)")]
-    at = {m: country_layer(c) for m, c in curves.items()}
-    hi = max(curves[m].loc[at[m], k] for m in MODELS for k, _ in panels)
+    hi = max(cmantel[m][k] for m in MODELS for k, _ in panels)
     for row, (key, head) in enumerate(panels):
         ax = fig.add_subplot(inner[row], facecolor=SURFACE)
-        vals = [curves[m].loc[at[m], key] for m in MODELS]
+        vals = [cmantel[m][key] for m in MODELS]
         bars = ax.barh(range(3), vals, height=0.6,
                        color=[GREY if key == "lex" else COLOUR[m] for m in MODELS],
                        zorder=3)
@@ -300,9 +257,9 @@ def main():
              "meaning and places — and where in the network it lives.",
              fontsize=11, color=INK2)
     fig.text(0.045, 0.016,
-             f"UMAP of internal activity: {len(org_names)} organisms at BERT L{xbest}, "
+             f"UMAP of internal activity: {len(org_names)} organisms at mBERT L{xbest}, "
              f"180 parallel sentences at mBERT L{early} and L{mbest}, "
-             f"{len(cnames)} countries at BERT L{cbest}. The four country ground truths "
+             f"{len(cnames)} countries at mBERT L{cbest}. The four country ground truths "
              "are nearly independent of one another (all |ρ| < 0.2), so each is credited "
              "separately. All statistics tested against permutation nulls.",
              fontsize=8, color=MUTED)

@@ -74,13 +74,33 @@ organisms:
   octopus:     [eukaryote, opisthokont, animal, mollusc, mollusc]
 
   # -------------------------------------------------------------- fungi
-  # same supergroup as the animals, not the plants
+  # Same supergroup as the animals, not the plants: Opisthokonta. Expanded to 18
+  # so the animal/plant tie-break is testable -- with six the permutation null was
+  # +/-0.3 and nothing could reach significance.
+  #
+  # "rust" and "smut" are genuine basidiomycete groups but are left out: both are
+  # heavily polysemous (oxidation, obscenity) and would measure the wrong sense.
+  # "mould" is kept despite the casting-mould sense, since the fungal reading
+  # dominates. "lichen" is a fungus-alga symbiosis, filed under its ascomycete
+  # partner.
   mushroom:    [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
   toadstool:   [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
+  chanterelle: [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
+  puffball:    [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
+  shiitake:    [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
+  portobello:  [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
+  amanita:     [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
+  boletus:     [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
+  enoki:       [eukaryote, opisthokont, fungus, basidiomycete, basidiomycete]
   yeast:       [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
   mould:       [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
   mildew:      [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
   truffle:     [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
+  morel:       [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
+  penicillium: [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
+  ergot:       [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
+  aspergillus: [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
+  lichen:      [eukaryote, opisthokont, fungus, ascomycete, ascomycete]
 
   # ------------------------------------------------------------- plants
   pine:        [eukaryote, archaeplastid, plant, conifer, conifer]

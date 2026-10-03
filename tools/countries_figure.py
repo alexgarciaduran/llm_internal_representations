@@ -40,8 +40,8 @@ from scipy.stats import spearmanr
 
 from llmprobe import quiet  # noqa: F401
 from llmprobe import geometry as G, variables as V
-from llmprobe.embed import extract_reps, sentence_states
-from llmprobe.familiarity import familiarity
+from llmprobe.curves import cached_familiarity, semantic_layer
+from llmprobe.embed import extract_reps
 from llmprobe.models import load, set_seed
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -61,7 +61,7 @@ LABEL = {"econ": "GDP gap", "ling": "Language family", "geo": "Geographic distan
 UNIT = {"econ": "|Δ log₁₀ GDP per capita|", "ling": "unshared branches (0–3)",
         "geo": "km between capitals", "famdiff": "|Δ log P(name)|"}
 SCATTERS = ["econ", "ling", "geo", "famdiff"]
-TRACES = ["econ", "ling", "geo", "fampair"]
+TRACES = ["econ", "ling", "geo", "famdiff"]
 
 
 def axes_style(ax, grid="y"):
@@ -90,27 +90,6 @@ def legend(ax, **kw):
         t.set_color(INK2)
 
 
-def meaning_curve(model):
-    """Silhouette by language / meaning / topic at every layer. Cached."""
-    lm = load(model)
-    pool = "last" if lm.kind == "causal" else "mean"
-    f = RES / f"meaning_{model}_{pool}.csv"
-    if f.exists():
-        return pd.read_csv(f)
-    pc = V.parallel_corpus()
-    reps = sentence_states(lm, pc["texts"], pool=pool)
-    t = pd.DataFrame([{"layer": L,
-                       **{lab: G.cluster_separation(G.center(reps[L]), pc[lab], n_perm=300)[0]
-                          for lab in ("language", "meaning", "topic")}}
-                      for L in range(len(reps))])
-    t.to_csv(f, index=False)
-    return t
-
-
-def semantic_layer(model):
-    """Layer where sentences cluster most by meaning and least by language."""
-    t = meaning_curve(model)
-    return int(np.argmax((t["meaning"] - t["language"]).values))
 
 
 def lexical_score(reps, groups, fam):
@@ -120,14 +99,6 @@ def lexical_score(reps, groups, fam):
         G.center(G.item_states(reps[L], groups)), axis=1)).statistic
         for L in range(len(reps))])
 
-
-def cached_familiarity(model, names):
-    f = RES / f"familiarity_{model}.csv"
-    if f.exists():
-        return pd.read_csv(f).value.values
-    v = familiarity(load(model), names)
-    pd.DataFrame({"country": names, "value": v}).to_csv(f, index=False)
-    return v
 
 
 def predictors(model, names):
@@ -192,6 +163,11 @@ def main():
               f"lexical score at this layer {lex_s[L]:+.2f}")
         print(f"  {'':13s} " + "  ".join(f"{k}={b:+.2f}{'*' if p < .05 else ''}"
                                          for k, b, p in zip(KEYS, beta[m], pval[m])), flush=True)
+
+    j = KEYS.index("famdiff")
+    for m in MODELS:
+        print(f"  famdiff trace {SHORT[m]:13s} " +
+              " ".join(f"{v:+.2f}" for v in traj[m][:, j]), flush=True)
 
     fig = plt.figure(figsize=(17.5, 14.0), facecolor=SURFACE)
     gs = fig.add_gridspec(3, 4, hspace=0.5, wspace=0.32,
