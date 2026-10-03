@@ -1,16 +1,30 @@
 """Build figures/COUNTRIES.png: what the country embedding tracks.
 
-Top    scatter of representational distance against the four clearest predictors
-Bottom marginal correlations, and one regression with all seven together
+Row 1  scatter of representational distance against the four clearest predictors
+Row 2  marginal correlations, and one regression with all seven together
+Row 3  how each weight moves with depth
 
-Marginal correlation asks "does the model track this at all?". The regression asks
-the sharper question: "does it still explain anything once the others are
-accounted for?" -- which is the only way to tell a real effect from a proxy for
-national prominence.
+## Choosing a layer
 
-Significance comes from permuting country labels, not from OLS standard errors:
-pairwise distances are not independent observations (each country appears in n-1
-pairs), so the usual errors would be far too small.
+The layer is picked from the PARALLEL CORPUS, not from the country data: the layer
+where sentences cluster most by meaning and least by language. That criterion
+knows nothing about countries, so it cannot be tuned to the result.
+
+It only works for a multilingual model, which is why mBERT is used here rather
+than English-only BERT -- for BERT "meaning" never beats "language" and the rule
+degenerates to L0, the embedding layer. GPT-2 is kept as the monolingual case and
+its layer is the least-bad point of the same curve; it lands mid-network, which is
+what matters.
+
+That matters because an earlier rule picked GPT-2's L1, where rare country names
+have large vectors and sit on the periphery (rho between familiarity and vector
+norm is -0.44 at L1, -0.00 by L6). That is token-frequency geometry, not
+geopolitics, and it flipped the sign of the familiarity weight. `lexical_score`
+is reported so the chosen layer can be checked against it, and row 3 shows the
+whole trajectory so no single layer carries the argument.
+
+Significance comes from permuting country labels, never OLS standard errors:
+pairwise distances are not independent observations.
 """
 
 from difflib import SequenceMatcher
@@ -22,30 +36,32 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy.spatial.distance import pdist, squareform
+from scipy.stats import spearmanr
 
 from llmprobe import quiet  # noqa: F401
 from llmprobe import geometry as G, variables as V
-from llmprobe.embed import extract_reps
+from llmprobe.embed import extract_reps, sentence_states
 from llmprobe.familiarity import familiarity
 from llmprobe.models import load, set_seed
 
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "results"
+RES.mkdir(exist_ok=True)
 
 BLUE, ORANGE, AQUA, GREY = "#2a78d6", "#eb6834", "#1baf7a", "#9a9992"
 INK, INK2, MUTED, GRID, SURFACE = "#0b0b0b", "#52514e", "#8a8984", "#e6e5e1", "#fcfcfb"
-MODELS = ["bert", "gpt2", "qwen0.5b"]
-COLOUR = {"bert": BLUE, "gpt2": ORANGE, "qwen0.5b": AQUA}
-SHORT = {"bert": "BERT", "gpt2": "GPT-2", "qwen0.5b": "Qwen2.5-0.5B"}
+MODELS = ["mbert", "gpt2", "qwen0.5b"]
+COLOUR = {"mbert": BLUE, "gpt2": ORANGE, "qwen0.5b": AQUA}
+SHORT = {"mbert": "mBERT", "gpt2": "GPT-2", "qwen0.5b": "Qwen2.5-0.5B"}
 
 KEYS = ["econ", "ling", "geo", "fampair", "famdiff", "pop", "lex"]
 LABEL = {"econ": "GDP gap", "ling": "Language family", "geo": "Geographic distance",
          "fampair": "How well known (pair mean)", "famdiff": "Difference in how well known",
          "pop": "Population gap", "lex": "Name spelling (control)"}
 UNIT = {"econ": "|Δ log₁₀ GDP per capita|", "ling": "unshared branches (0–3)",
-        "geo": "km between capitals",
-        "famdiff": "|Δ log P(name)| — one well known, one not"}
-SCATTERS = ["famdiff", "econ", "ling", "geo"]          # the four clearest, by |rho|
+        "geo": "km between capitals", "famdiff": "|Δ log P(name)|"}
+SCATTERS = ["econ", "ling", "geo", "famdiff"]
+TRACES = ["econ", "ling", "geo", "fampair"]
 
 
 def axes_style(ax, grid="y"):
@@ -74,11 +90,35 @@ def legend(ax, **kw):
         t.set_color(INK2)
 
 
-def country_layer(curve):
-    """One layer per model: the highest mean agreement over geo/ling/econ. Letting
-    each predictor pick its own best layer inflates it -- that is a maximum over
-    13-25 chances."""
-    return int(curve.loc[curve[["geo", "ling", "econ"]].mean(axis=1).idxmax(), "L"])
+def meaning_curve(model):
+    """Silhouette by language / meaning / topic at every layer. Cached."""
+    lm = load(model)
+    pool = "last" if lm.kind == "causal" else "mean"
+    f = RES / f"meaning_{model}_{pool}.csv"
+    if f.exists():
+        return pd.read_csv(f)
+    pc = V.parallel_corpus()
+    reps = sentence_states(lm, pc["texts"], pool=pool)
+    t = pd.DataFrame([{"layer": L,
+                       **{lab: G.cluster_separation(G.center(reps[L]), pc[lab], n_perm=300)[0]
+                          for lab in ("language", "meaning", "topic")}}
+                      for L in range(len(reps))])
+    t.to_csv(f, index=False)
+    return t
+
+
+def semantic_layer(model):
+    """Layer where sentences cluster most by meaning and least by language."""
+    t = meaning_curve(model)
+    return int(np.argmax((t["meaning"] - t["language"]).values))
+
+
+def lexical_score(reps, groups, fam):
+    """Per layer: rho(familiarity, ||vector||). Strongly negative means rare names
+    sit on the periphery -- token-frequency geometry rather than semantics."""
+    return np.array([spearmanr(fam, np.linalg.norm(
+        G.center(G.item_states(reps[L], groups)), axis=1)).statistic
+        for L in range(len(reps))])
 
 
 def cached_familiarity(model, names):
@@ -91,8 +131,8 @@ def cached_familiarity(model, names):
 
 
 def predictors(model, names):
-    """All seven pairwise predictors for one model. Five are model-independent;
-    the two familiarity terms are measured from that model itself."""
+    """The seven pairwise predictors. Five are model-independent; the two
+    familiarity terms are measured from that model itself."""
     geo, ling, econ = V.country_distances()
     lex = np.array([[1 - SequenceMatcher(None, a.lower(), b.lower()).ratio()
                      for b in names] for a in names])
@@ -103,20 +143,32 @@ def predictors(model, names):
             "pop": V.population_distance(), "lex": lex}
 
 
+def _z(v):
+    return (v - v.mean()) / v.std()
+
+
 def weights(D, T, iu, n_perm=400, seed=0):
     """Standardised OLS weights with a label-permutation null, plus R²."""
-    z = lambda v: (v - v.mean()) / v.std()
-    X = np.column_stack([z(T[k][iu]) for k in KEYS])
-    y = z(D[iu])
+    X = np.column_stack([_z(T[k][iu]) for k in KEYS])
+    y = _z(D[iu])
     b = np.linalg.lstsq(X, y, rcond=None)[0]
     r2 = 1 - ((y - X @ b) ** 2).sum() / (y ** 2).sum()
     rng = np.random.default_rng(seed)
     n = D.shape[0]
-    null = np.array([np.linalg.lstsq(X, z(D[np.ix_(p, p)][iu]), rcond=None)[0]
+    null = np.array([np.linalg.lstsq(X, _z(D[np.ix_(p, p)][iu]), rcond=None)[0]
                      for p in (rng.permutation(n) for _ in range(n_perm))])
-    pv = [(np.sum(np.abs(null[:, j]) >= abs(b[j])) + 1) / (n_perm + 1)
-          for j in range(len(KEYS))]
-    return b, np.array(pv), null.std(0), r2
+    pv = np.array([(np.sum(np.abs(null[:, j]) >= abs(b[j])) + 1) / (n_perm + 1)
+                   for j in range(len(KEYS))])
+    return b, pv, null.std(0), r2
+
+
+def weights_by_layer(reps, groups, T, iu):
+    """Standardised weights at every layer. (n_layers, n_predictors)"""
+    X = np.column_stack([_z(T[k][iu]) for k in KEYS])
+    return np.array([np.linalg.lstsq(
+        X, _z(squareform(pdist(G.center(G.item_states(reps[L], groups)),
+                               "euclidean"))[iu]), rcond=None)[0]
+        for L in range(len(reps))])
 
 
 def main():
@@ -126,24 +178,28 @@ def main():
     iu = np.triu_indices(len(names), 1)
     print("computing...", flush=True)
 
-    T, D, marg, beta, pval, err, r2 = {}, {}, {}, {}, {}, {}, {}
+    T, D, marg, beta, pval, err, r2, traj, sel = {}, {}, {}, {}, {}, {}, {}, {}, {}
     for m in MODELS:
         T[m] = predictors(m, names)
-        L = country_layer(pd.read_csv(RES / f"countries_{m}.csv"))
         reps = extract_reps(load(m), var)
+        L = sel[m] = semantic_layer(m)
+        lex_s = lexical_score(reps, var.groups, cached_familiarity(m, names))
         D[m] = squareform(pdist(G.center(G.item_states(reps[L], var.groups)), "euclidean"))
         marg[m] = [G.mantel(D[m], T[m][k], n_perm=1000)[0] for k in KEYS]
         beta[m], pval[m], err[m], r2[m] = weights(D[m], T[m], iu)
-        print(f"  {SHORT[m]:13s} L{L}  R²={r2[m]:.2f}  " +
-              "  ".join(f"{k}={b:+.2f}{'*' if p < .05 else ''}"
-                        for k, b, p in zip(KEYS, beta[m], pval[m])), flush=True)
+        traj[m] = weights_by_layer(reps, var.groups, T[m], iu)
+        print(f"  {SHORT[m]:13s} L{L}/{len(reps)-1}  R²={r2[m]:.2f}  "
+              f"lexical score at this layer {lex_s[L]:+.2f}")
+        print(f"  {'':13s} " + "  ".join(f"{k}={b:+.2f}{'*' if p < .05 else ''}"
+                                         for k, b, p in zip(KEYS, beta[m], pval[m])), flush=True)
 
-    fig = plt.figure(figsize=(17.5, 9.6), facecolor=SURFACE)
-    gs = fig.add_gridspec(2, 4, hspace=0.55, wspace=0.32,
-                          left=0.05, right=0.985, top=0.82, bottom=0.095)
+    fig = plt.figure(figsize=(17.5, 14.0), facecolor=SURFACE)
+    gs = fig.add_gridspec(3, 4, hspace=0.5, wspace=0.32,
+                          left=0.05, right=0.985, top=0.855, bottom=0.055)
 
-    ref = "bert"
-    y = (D[ref][iu] - D[ref][iu].mean()) / D[ref][iu].std()
+    # ---- row 1: scatters
+    ref = "mbert"
+    y = _z(D[ref][iu])
     for col, k in enumerate(SCATTERS):
         ax = fig.add_subplot(gs[0, col], facecolor=SURFACE)
         x = T[ref][k][iu]
@@ -167,21 +223,20 @@ def main():
         axes_style(ax)
         title(ax, LABEL[k], f"ρ = {marg[ref][KEYS.index(k)]:+.2f}", size=10)
 
+    # ---- row 2: marginal and joint
     w = 0.26
     xs = np.arange(len(KEYS))
-    short_lab = [LABEL[k].replace(" (control)", "\n(control)").replace(" (pair mean)", "\n(pair mean)")
-                 .replace("Difference in how well known", "Difference in\nhow well known")
-                 .replace("Geographic distance", "Geographic\ndistance")
-                 .replace("Language family", "Language\nfamily")
-                 .replace("Population gap", "Population\ngap") for k in KEYS]
+    short = [LABEL[k].replace(" (control)", "\n(control)").replace(" (pair mean)", "\n(pair mean)")
+             .replace("Difference in how well known", "Difference in\nhow well known")
+             .replace("Geographic distance", "Geographic\ndistance")
+             .replace("Language family", "Language\nfamily")
+             .replace("Population gap", "Population\ngap") for k in KEYS]
 
     ax = fig.add_subplot(gs[1, 0:2], facecolor=SURFACE)
     for i, m in enumerate(MODELS):
         ax.bar(xs + (i - 1) * w, marg[m], width=w, color=COLOUR[m], label=SHORT[m], zorder=3)
-    ax.set_xticks(xs)
-    ax.set_xticklabels(short_lab, fontsize=7.2)
-    ax.set_ylabel("Mantel ρ")
-    ax.axhline(0, color=MUTED, lw=0.9)
+    ax.set_xticks(xs); ax.set_xticklabels(short, fontsize=7.2)
+    ax.set_ylabel("Mantel ρ"); ax.axhline(0, color=MUTED, lw=0.9)
     legend(ax, fontsize=8, loc="lower left", ncol=3)
     axes_style(ax)
     title(ax, "Marginal correlation", "each predictor on its own")
@@ -195,26 +250,42 @@ def main():
             if p < 0.05:
                 ax.text(j + (i - 1) * w, b + (0.012 if b >= 0 else -0.03), "*",
                         ha="center", fontsize=10, color=INK2)
-    ax.set_xticks(xs)
-    ax.set_xticklabels(short_lab, fontsize=7.2)
-    ax.set_ylabel("standardised weight")
-    ax.axhline(0, color=MUTED, lw=0.9)
+    ax.set_xticks(xs); ax.set_xticklabels(short, fontsize=7.2)
+    ax.set_ylabel("standardised weight"); ax.axhline(0, color=MUTED, lw=0.9)
     legend(ax, fontsize=8, loc="lower left", ncol=3)
     axes_style(ax)
     title(ax, "All seven together", "* = p < 0.05 · error bars = permutation sd")
 
-    fig.text(0.05, 0.945, "What the country embedding tracks", fontsize=19,
+    # ---- row 3: weight against depth
+    for col, k in enumerate(TRACES):
+        ax = fig.add_subplot(gs[2, col], facecolor=SURFACE)
+        j = KEYS.index(k)
+        for m in MODELS:
+            d = np.linspace(0, 1, traj[m].shape[0])
+            ax.plot(d, traj[m][:, j], "-", color=COLOUR[m], lw=2, label=SHORT[m], zorder=3)
+            x0 = sel[m] / (traj[m].shape[0] - 1)
+            ax.plot(x0, traj[m][sel[m], j], "o", color=COLOUR[m], ms=8, mec="white",
+                    mew=1.4, zorder=4)
+        ax.axhline(0, color=MUTED, lw=0.9)
+        ax.set_xlabel("relative depth")
+        if col == 0:
+            ax.set_ylabel("standardised weight")
+            legend(ax, fontsize=7.4, loc="best")
+        axes_style(ax)
+        title(ax, LABEL[k], "dot = chosen layer", size=10)
+
+    fig.text(0.05, 0.955, "What the country embedding tracks", fontsize=19,
              color=INK, fontweight="semibold")
-    fig.text(0.05, 0.9,
+    fig.text(0.05, 0.922,
              "Distance between 48 countries against seven predictors, including two "
              "measuring how well the model knows each country — the control for "
              "“it is just training-data volume”.",
              fontsize=10.5, color=INK2)
-    fig.text(0.05, 0.016,
-             "Each point is one country pair (1,128 of them); scatters are BERT. "
-             "“How well known” is the model's own log-probability of the country name, "
-             "a proxy for how much training text mentions it. Significance from "
-             "permuting country labels, not OLS errors.",
+    fig.text(0.05, 0.012,
+             "Each point is one country pair (1,128 of them); scatters are mBERT. The layer "
+             "is chosen from the parallel corpus — where sentences cluster most by meaning "
+             "and least by language — so it is picked without reference to the country data. "
+             "Significance from permuting country labels, not OLS errors.",
              fontsize=8, color=MUTED)
 
     out = ROOT / "figures" / "COUNTRIES.png"
