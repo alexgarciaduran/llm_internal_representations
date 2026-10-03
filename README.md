@@ -100,48 +100,6 @@ write-up here — run their scripts to see what they give:
 - **body parts** (`tools/bodyparts_figure.py`), 90 parts on a head-to-toe
   coordinate with an internal/external control independent of height
 
-## What held up, and what didn't
-
-The coarse signals are robust. Fine-grained claims about particular sub-groups
-were not — three of them dissolved once properly controlled, and they are worth
-recording because each failed in a different way.
-
-**A layer choice flipped a sign.** GPT-2's familiarity weight came out *negative*
-under a rule that happened to select its layer 1 — where rare country names have
-large vectors and sit on the rim of the space (ρ between familiarity and vector
-norm is −0.44 there, −0.00 by layer 6). Token-frequency geometry, not geopolitics.
-By layer 4 the sign flips and GPT-2 agrees with the other models.
-
-**A stimulus set flipped a sign.** Fungi appeared to sit nearer plants than
-phylogeny allows. Expanding the fungal set from 6 to 18 made the effect reverse in
-mBERT (+0.43 → −0.22), vanish in Qwen (+0.31 → +0.04), and survive only in GPT-2.
-It was a property of which six fungi were picked.
-
-**A cue inside the label flipped a result.** Primality looked decodable at 0.84
-until the last-digit sieve was measured on its own and scored 0.857 — the probe
-had learned "ends in 1, 3, 7 or 9", not primality.
-
-**A tokenizer flipped a result.** Qwen2.5-0.5B splits numerals into single digits
-(`47` → `4`, `7`), so its "last digit" is an input token sitting inside the span.
-It is excluded from that comparison rather than reported as a model that encodes
-digits unusually well.
-
-**A model choice flipped a result.** The same fungal comparison looked
-non-monotonic under BERT at one layer and perfectly monotonic under mBERT at
-another.
-
-Hence the two rules now used throughout:
-
-**The layer is chosen from different data.** The country layer is where the
-*parallel corpus* clusters most by meaning and least by language — a criterion
-that never touches the country data, so it cannot be tuned to the answer. Both
-figures import it from one place (`curves.py`) so they cannot drift apart.
-
-**Character offsets, not token counting.** The target word is located by its
-character span. Comparing token counts of `prefix` and `prefix + word` is off by
-one whenever the prefix ends in a space, and then every word silently returns the
-vector of the following token.
-
 ## Layout
 
 ```
