@@ -5,8 +5,9 @@
 What the **internal layers** of open-weight language models encode about living
 things, meaning and places — and where in the network it lives.
 
-Runs on **CPU**, uses **open-weight models only**, and is **deterministic**: no
-sampling anywhere, and every statistic is tested against a permutation null.
+Three models: **mBERT**, **GPT-2** and **Qwen2.5-0.5B**. Runs on **CPU**, uses
+**open-weight models only**, and is **deterministic**: no sampling anywhere, and
+every statistic is tested against a permutation null.
 
 ## Reproduce
 
@@ -62,20 +63,38 @@ The depth traces show what a single layer would hide: **the economic signal is
 strongest in the lower-middle layers and fades toward the output, while geography
 grows with depth.**
 
-## Two details that decide whether any of this is real
+## What held up, and what didn't
+
+The coarse signals are robust. Fine-grained claims about particular sub-groups
+were not — three of them dissolved once properly controlled, and they are worth
+recording because each failed in a different way.
+
+**A layer choice flipped a sign.** GPT-2's familiarity weight came out *negative*
+under a rule that happened to select its layer 1 — where rare country names have
+large vectors and sit on the rim of the space (ρ between familiarity and vector
+norm is −0.44 there, −0.00 by layer 6). Token-frequency geometry, not geopolitics.
+By layer 4 the sign flips and GPT-2 agrees with the other models.
+
+**A stimulus set flipped a sign.** Fungi appeared to sit nearer plants than
+phylogeny allows. Expanding the fungal set from 6 to 18 made the effect reverse in
+mBERT (+0.43 → −0.22), vanish in Qwen (+0.31 → +0.04), and survive only in GPT-2.
+It was a property of which six fungi were picked.
+
+**A model choice flipped a result.** The same fungal comparison looked
+non-monotonic under BERT at one layer and perfectly monotonic under mBERT at
+another.
+
+Hence the two rules now used throughout:
+
+**The layer is chosen from different data.** The country layer is where the
+*parallel corpus* clusters most by meaning and least by language — a criterion
+that never touches the country data, so it cannot be tuned to the answer. Both
+figures import it from one place (`curves.py`) so they cannot drift apart.
 
 **Character offsets, not token counting.** The target word is located by its
 character span. Comparing token counts of `prefix` and `prefix + word` is off by
 one whenever the prefix ends in a space, and then every word silently returns the
 vector of the following token.
-
-**The layer is chosen from different data.** For the country analysis the layer is
-the one where the *parallel corpus* clusters most by meaning and least by
-language — a criterion that never touches the country data, so it cannot be tuned
-to the answer. An earlier rule picked GPT-2's layer 1, where rare country names
-have large vectors and sit on the rim of the space (ρ between familiarity and
-vector norm is −0.44 there, −0.00 by layer 6). That is token-frequency geometry,
-not geopolitics, and it had flipped the sign of a weight.
 
 ## Layout
 
@@ -85,6 +104,7 @@ src/llmprobe/
   embed.py        per-layer activations for a word or a whole sentence
   geometry.py     distances, Mantel test, silhouette, 2-D projection
   familiarity.py  how well the model knows a name (the training-data control)
+  curves.py       cached per-layer curves, and the one definition of the layer rule
   variables.py    the concepts and their ground truths
   stimuli/        taxonomy.yaml · countries.yaml · parallel.yaml
 tools/
@@ -97,10 +117,16 @@ not a code change.
 
 ## Limitations
 
-Four models differing in many ways at once, so architectural explanations are
+Three models differing in many ways at once, so architectural explanations are
 hypotheses, not demonstrated causes. Small stimulus sets (48–180 items), and only
-48 independent units behind the 1,128 country pairs. Taxonomic rank depth and
-language-family depth are coarse proxies for genetic and cultural distance; GDP
-and population figures are approximate, rounded, around 2023. Probes show that
-information is *available* in a representation, not that the model *uses* it —
-that needs intervention, which this repo does not do.
+48 independent units behind the 1,128 country pairs — which is why sub-group
+comparisons keep failing to replicate while the overall correlations hold.
+
+Taxonomic rank depth and language-family depth are coarse proxies for genetic and
+cultural distance; GDP and population figures are approximate, rounded, around
+2023. Fungal names are far rarer in text than animal or plant names (mean
+log-probability −16.2 against −11.4 and −12.5), so that kingdom is measured more
+noisily than the others.
+
+Probes show that information is *available* in a representation, not that the
+model *uses* it — that needs intervention, which this repo does not do.
